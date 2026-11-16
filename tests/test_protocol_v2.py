@@ -442,7 +442,7 @@ class ManualIntegrationTests(unittest.TestCase):
             "--reason",
             "Allowance approved in decision register",
             "--authority",
-            "00_brief/decisions.md",
+            "05_governance/human_owner_notes/README.md",
             "--by",
             "architect",
         )
@@ -452,6 +452,38 @@ class ManualIntegrationTests(unittest.TestCase):
         events = ledger.read(self.root / commit.LEDGER)
         errors = ledger.check(self.root, roadmap.load(self.root), events)
         self.assertTrue(any("drift" in message or "hash" in message for message in errors))
+
+    def test_living_files_cannot_be_bound_as_authority_or_evidence(self):
+        # A bound file is hashed whole and compared for ever; the decision register,
+        # the brief, the roadmap and the backlog keep changing.
+        blocker = ("--requirement", "acceptance 1", "--reason", "Allowance absent",
+                   "--actor", "human", "--action", "Record allowance")
+        prompt.coding(self.root, "M001-S01")
+        before = (self.root / commit.LEDGER).read_bytes()
+        tree = _workspace.snapshot(self.root)
+        result = self.cli("blocked", "M001-S01", *blocker, "--evidence", "roadmap.yaml")
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("living file roadmap.yaml", result.stderr.decode())
+        self.assertEqual(_workspace.snapshot(self.root), tree)
+        self.success("blocked", "M001-S01", *blocker)
+        before = (self.root / commit.LEDGER).read_bytes()
+        for living in ("00_brief/decisions.md", "00_brief/intake.md", "roadmap.yaml",
+                       "AGENTS.md", "05_governance/backlog.md", "05_governance/ledger.jsonl"):
+            with self.subTest(living=living):
+                result = self.cli("resolve", "M001-S01", "--reason", "Owner ruling",
+                                  "--authority", living)
+                self.assertEqual(result.returncode, 2)
+                self.assertIn("living file", result.stderr.decode())
+                self.assertIn("human_owner_notes", result.stderr.decode())
+                self.assertEqual((self.root / commit.LEDGER).read_bytes(), before)
+        self.assertEqual(self.state()["slices"]["M001-S01"]["step"], "blocked")
+        self.success("resolve", "M001-S01", "--reason", "Owner ruling",
+                     "--authority", "05_governance/human_owner_notes/README.md")
+        self.assertEqual(self.state()["slices"]["M001-S01"]["step"], "fix")
+        decisions = self.root / "00_brief/decisions.md"
+        decisions.write_bytes(decisions.read_bytes() + b"\n## D002 - A later decision\n")
+        events = ledger.read(self.root / commit.LEDGER)
+        self.assertEqual(ledger.artifact_errors(self.root, events), [])
 
     def test_illegal_blocker_edits_are_preserved_and_not_recorded_as_valid(self):
         prompt.coding(self.root, "M001-S01")
@@ -518,7 +550,8 @@ class ManualIntegrationTests(unittest.TestCase):
         self.assertIn("unresolved invocation", result.stderr.decode())
         self.assertEqual((self.root / commit.LEDGER).read_bytes(), before)
         self.success("status")
-        authority = self.root / "00_brief/decisions.md"
+        note = "05_governance/human_owner_notes/README.md"
+        authority = self.root / note
         finish = event(
             "attempt_finished",
             invocation="lost-coder",
@@ -526,7 +559,7 @@ class ManualIntegrationTests(unittest.TestCase):
             by="human",
             reason="Owned process exited; lost output remains unknown",
             usage={"completeness": "unknown"},
-            evidence=[{"path": "00_brief/decisions.md", "sha": c.sha(authority)}],
+            evidence=[{"path": note, "sha": c.sha(authority)}],
         )
         path.write_text(json.dumps(finish))
         self.success("attempt", "local_state/attempt.json")
@@ -608,7 +641,7 @@ class ManualIntegrationTests(unittest.TestCase):
             "--reason",
             "Human authority supplied",
             "--authority",
-            "00_brief/decisions.md",
+            "05_governance/human_owner_notes/README.md",
             "--by",
             "human",
         )

@@ -75,8 +75,14 @@ outcome instead; exact grammar is in [contracts](contracts.md). A blocker stops
 before verification. Human/architect resumption uses:
 
 ```text
-python scripts/ledger.py resolve M001-S01 --reason "authority now recorded" --authority 00_brief/decisions.md
+python scripts/ledger.py resolve M001-S01 --reason "authority now recorded" --authority 05_governance/human_owner_notes/2026-01-15_allowance.md
 ```
+
+A file named in `resolve --authority` or `blocked --evidence` is hashed whole, and every later
+`ledger.py check` compares it: it can never change again. Name a file written
+once, a dated owner note or the answered question, and cite it from the decision
+register. The commands refuse the brief, `roadmap.yaml`, `AGENTS.md`, the backlog
+and the ledger, which keep changing.
 
 The same verb resolves a blocked milestone. It preserves the original frozen
 acceptance and grants no undeclared budget. Materially changed scope belongs in

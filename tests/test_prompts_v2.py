@@ -311,7 +311,7 @@ class PromptV2Tests(unittest.TestCase):
                 ),
                 0,
             )
-            decision = root / "00_brief/decisions.md"
+            decision = root / "05_governance/human_owner_notes/README.md"
             decision.write_text("D-1: The named input is approved.\n", encoding="utf-8")
             self.assertEqual(
                 quiet_call(
@@ -324,7 +324,7 @@ class PromptV2Tests(unittest.TestCase):
                         "--reason",
                         "D-1 permits input",
                         "--authority",
-                        "00_brief/decisions.md",
+                        "05_governance/human_owner_notes/README.md",
                     ],
                 ),
                 0,
@@ -664,7 +664,7 @@ class HashPresentationTests(unittest.TestCase):
                          "--actor", "human", "--action", "Supply")
             self.command(root, "resolve", "M001-S01",
                          "--reason", "Now supplied " + "detail " * 3500,
-                         "--authority", "00_brief/decisions.md")
+                         "--authority", "05_governance/human_owner_notes/README.md")
             rendered = []
             original = prompt._render
             def observe(*args, **kwargs):

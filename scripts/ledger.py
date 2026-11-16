@@ -86,6 +86,23 @@ def _need(ok, message):
         raise ValueError(message)
 
 
+# Files the project keeps writing. A bound reference hashes the whole file and
+# every later check compares it, so binding one would freeze it for ever.
+LIVING = ("roadmap.yaml", "agents.md", "05_governance/ledger.jsonl", "05_governance/backlog.md")
+
+
+def _write_once(rel, rm):
+    """Refuse a new authority or evidence reference to a living file."""
+    brief = str(rm.get("brief") or "00_brief/").rstrip("/").casefold() + "/"
+    name = str(rel).casefold()
+    _need(
+        name not in LIVING and not name.startswith(brief),
+        f"cannot bind living file {rel}: a bound file is hashed whole and may never "
+        "change again. Name a file written once, such as a dated note in "
+        "05_governance/human_owner_notes/ or the answered question",
+    )
+
+
 def _validate_changes(value, line, field):
     _need(isinstance(value, list), f"{line}: {field} must be a list")
     for number, item in enumerate(value):
@@ -361,6 +378,8 @@ def _append(path: c.Path, event, rm):
     candidate = {"schema": schema, "t": c.now(), **event}
     _need(candidate["schema"] == schema, "writer schema differs from declared roadmap")
     _validate(candidate)
+    for ref in candidate.get("authority", []) + candidate.get("evidence", []):
+        _write_once(ref["path"], rm)
     if candidate["ev"] == "run_admitted":
         _need(
             any(
@@ -734,6 +753,8 @@ def _coded(root, args, rm, events, state, ledger_path):
             ),
             "blocked needs --outcome or --requirement, --reason, --actor and --action",
         )
+        for item in args.evidence:
+            _write_once(c.cli_rel(item), rm)
         value = {
             "schema": "frutlups.outcome/2",
             "slice": args.slice,
@@ -748,6 +769,8 @@ def _coded(root, args, rm, events, state, ledger_path):
         outcome_ref = _save_json(root, args.slice, current["round"], "outcome", value)
     if outcome_ref:
         value = protocol.outcome(root, outcome_ref, args.slice, current["round"])
+        for item in value["evidence"]:
+            _write_once(item["path"], rm)
         _need(value["outcome"] == result, "outcome differs from explicit result")
         event["outcome"] = outcome_ref
     _need(result == "implemented" or outcome_ref, "blocked result requires --outcome")

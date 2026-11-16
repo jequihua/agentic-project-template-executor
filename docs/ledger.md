@@ -32,7 +32,8 @@ receipt witness/index/product digests retain their distinct raw domains.
 
 A `/2` manifest contains cumulative `path,sha,kind,round` rows. Notes bind `notes_path` and `notes_sha`.
 Prompt/receipt/report/manifest/outcome and supporting artifacts are immutable;
-`ledger.py check` validates their references. Active verification/review/acceptance
+`ledger.py check` validates their references. So is every file bound as authority
+or evidence: bind write-once files only; living files are refused. Active verification/review/acceptance
 also rejects product drift after coding. Historical completed Git witnesses
 validate committed blobs rather than today's worktree.
 

@@ -137,7 +137,7 @@ class ContractSelectionTests(unittest.TestCase):
                          "--actor", "owner", "--action", "Supply input",
                          "--remaining", "Complete work")
         self.command(root, "resolve", SID, "--reason", "Input supplied",
-                     "--authority", "00_brief/decisions.md")
+                     "--authority", "05_governance/human_owner_notes/README.md")
 
     def test_resolved_continuation_then_each_legal_new_issuance(self):
         cases = (("authority", "needs_work"), ("environment", "verification_failure"),
@@ -323,7 +323,7 @@ class ContractSelectionTests(unittest.TestCase):
                                        encoding="utf-8")
                 self.command(root, "record", rel, "--milestone", "M002")
                 self.command(root, "resolve", "M002", "--reason", "Milestone input supplied",
-                             "--authority", "00_brief/decisions.md")
+                             "--authority", "05_governance/human_owner_notes/README.md")
                 self.command(root, "reopen", "M002-S01", "--reason", "Other correction")
                 run_git(root, "add", ".")
                 run_git(root, "commit", "-qm", "other reopen")
@@ -331,7 +331,7 @@ class ContractSelectionTests(unittest.TestCase):
                 self.command(root, "blocked", "M002-S01", "--requirement", "Other input",
                              "--reason", "Missing", "--actor", "owner", "--action", "Supply")
                 self.command(root, "resolve", "M002-S01", "--reason", "Other input supplied",
-                             "--authority", "00_brief/decisions.md")
+                             "--authority", "05_governance/human_owner_notes/README.md")
                 new = self.configure(root, 2)
                 run_git(root, "add", ".")
                 run_git(root, "commit", "-qm", "cross scope evidence")
@@ -369,7 +369,7 @@ class ContractSelectionTests(unittest.TestCase):
                 self.assertEqual(len(labels), 2)
                 self.assertTrue(labels[0].startswith("Resolution authority:"))
                 self.assertTrue(labels[1].startswith("Historical resolution authority:"))
-                authority = "00_brief/decisions.md"
+                authority = "05_governance/human_owner_notes/README.md"
                 for line in labels:
                     self.assertIn(f"`{authority}` (normalized evidence SHA-256 `"
                                   f"{c.sha(root / authority)}`)", line)
@@ -393,7 +393,7 @@ class ContractSelectionTests(unittest.TestCase):
                     self.block(root, "authority")
                     events = ledger.read(root / "05_governance/ledger.jsonl")
                     rel = (events[0]["envelope"]["path"] if target == "envelope"
-                           else "00_brief/decisions.md")
+                           else "05_governance/human_owner_notes/README.md")
                     if damage == "missing":
                         (root / rel).unlink()
                     else:
@@ -694,7 +694,7 @@ class DependablePromptTests(unittest.TestCase):
                         "--reason",
                         "Input recorded",
                         "--authority",
-                        "00_brief/decisions.md",
+                        "05_governance/human_owner_notes/README.md",
                     ],
                 ),
                 0,
@@ -826,7 +826,7 @@ class DependablePromptTests(unittest.TestCase):
                         "--reason",
                         "Source approved",
                         "--authority",
-                        "00_brief/decisions.md",
+                        "05_governance/human_owner_notes/README.md",
                     ],
                 ),
                 0,

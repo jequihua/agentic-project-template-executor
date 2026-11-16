@@ -1,7 +1,9 @@
 # Decision register
 
 This is the single source for accepted project decisions. Append entries; do not
-rewrite history when a decision changes.
+rewrite history when a decision changes. Because this file keeps growing, never
+name it as the `--authority` of a resolved blocker: name the owner's dated note
+or the answered question, and cite that here.
 
 ## D001 — Adopt the v4 operating scaffold
 

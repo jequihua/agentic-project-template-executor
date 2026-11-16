@@ -465,7 +465,7 @@ class LedgerRemediationTests(unittest.TestCase):
                         "--reason",
                         "owner supplied the decision",
                         "--authority",
-                        "00_brief/decisions.md",
+                        "05_governance/human_owner_notes/README.md",
                         "--by",
                         "architect",
                     ],

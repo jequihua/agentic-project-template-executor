@@ -97,7 +97,9 @@ interruption. Passing another review never implicitly closes an older finding.
 Owner reopening uses
 `python scripts/ledger.py reopen M001-S01 --reason "<reason>" --by human`.
 After a blocker, a human or architect uses
-`ledger.py resolve M001-S01 --reason "<new fact>" --authority <decision-or-evidence>`.
+`ledger.py resolve M001-S01 --reason "<new fact>" --authority <write-once file>`.
+That file is hashed whole and can never change again: name a dated owner note or
+the answered question, never the decision register ([why](upgrading.md#exceptional-commands)).
 The next prompt preserves all 14 task values only when this slice's latest
 `resolved` follows its latest `prompt`. Preview consumes nothing; issuance consumes
 continuation. Later legal corrections/reopens use the admitted roadmap;

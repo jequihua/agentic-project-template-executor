@@ -201,7 +201,9 @@ refused until every slice is accepted.
 2. Do not commit, stash or clean the unfinished work of a slice. `ledger.py coded`
    has to find it as that slice's change.
 3. Answer the open questions and record what they change. Resolve a blocked slice
-   with `python scripts/ledger.py resolve <slice> --reason ... --authority ...`.
+   with `python scripts/ledger.py resolve <slice> --reason ... --authority <file>`,
+   naming a file written once, such as the owner's dated note: it is hashed whole
+   and can never change again.
 4. Write the continuation authorization, `05_governance/human_owner_notes/
    <MID>_run_2.md` (then `_3`, and so on), in the layout of the first, adding: the
    state of each unfinished slice as `ledger.py status` prints it; the uncommitted
