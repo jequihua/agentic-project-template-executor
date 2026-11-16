@@ -36,6 +36,7 @@ shown by the run authorization, the run report and the commits.
 - Corrective rounds per slice: 2.
 - Budgets: for example hours of training, number of experiment attempts.
 - Expected state at the start: a clean tree; what `ledger.py status` shows.
+- Outside reading: public documentation of the libraries in use, or none.
 - Excluded: anything the milestone's slices do not name.
 - Approved by the owner on <date>: "<the owner's words>"
 ```
@@ -71,6 +72,13 @@ this working tree, on files that do not overlap when they run at the same time.
 They never run loop scripts and never commit. Slices are never run in parallel:
 step 3 reads every change in the tree. You answer for delegated work. Read-only
 subagents for search and reading are unrestricted.
+
+### Outside reading
+
+Unless the authorization says none, you, your coding subagents and the slice
+reviewer may read the public documentation and public source of the libraries in
+use, under the Safety rule of `AGENTS.md`. The rules grant no tool; the harness
+does. Coders list their pages in their notes, the reviewer in `## Pages read`.
 
 ### The slice reviewer
 
@@ -117,6 +125,8 @@ of the authorization is used up, or on a refusal you did not cause. Then write
 
 - per slice: rounds, verdicts, the acceptance commit;
 - what was delegated to subagents;
+- every page read outside the project, per slice and role: address, version
+  documented, reason;
 - what could not be verified; deviations from the prompts;
 - open questions and the reason for stopping.
 
