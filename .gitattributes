@@ -10,3 +10,6 @@
 
 # Framework qualification stays in the template repository, not projects.
 /tests export-ignore
+
+# The licence covers the template repository; a project chooses its own.
+/LICENSE export-ignore

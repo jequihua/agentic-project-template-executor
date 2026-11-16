@@ -141,7 +141,8 @@ def project_files() -> set[str]:
             check=True,
         )
         paths = {os.fsdecode(value) for value in result.stdout.split(b"\0") if value}
-        return {path for path in paths if not path.startswith("tests/")}
+        # The repository licence, like the tests, is not part of a project.
+        return {path for path in paths if not path.startswith("tests/") and path != "LICENSE"}
     # A real archive has no Git metadata; inspect only its explicitly admitted roots.
     files = {path.name for path in ROOT.iterdir() if path.is_file()}
     for folder in {Path(rel).parts[0] for rel in EXPECTED if "/" in rel} - {"local_state"}:
