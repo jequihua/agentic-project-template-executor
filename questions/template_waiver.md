@@ -1,8 +1,9 @@
-# Waiver: <finding ID> (<guided or forced>)
+# Waiver: <finding ID> (guided)
 
 - Date:
 - Finding: <ID>, <severity>, source report <path>
 - Drafted by:
+- Kind: the first line ends `(guided)` or `(forced)`; `ledger.py waive` checks it.
 
 ## Conditions
 

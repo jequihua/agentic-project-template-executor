@@ -221,6 +221,14 @@ def project(root, events, extra=None):
     return projection.findings, projection.diagnostics
 
 
+def open_in_scope(root, events, sid):
+    """The unresolved P0-P2 findings of one slice, by source-bound key."""
+    projection = Projection(root)
+    for ref, event in report_events(events):
+        projection.add(ref, event)
+    return {key: projection.findings[key] for key in projection.open_by_scope.get(sid, set())}
+
+
 def drift(root, events, sid):
     """Count the slice's latest reviews in a row that closed all older findings and opened new."""
     projection = Projection(root)

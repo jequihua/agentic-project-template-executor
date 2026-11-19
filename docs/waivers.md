@@ -42,39 +42,44 @@ accepts a known fault that can be reached, so it is for extreme cases.
 ## The waiver file
 
 Copy `questions/template_waiver.md` to a dated file of its own in
-`05_governance/human_owner_notes/`. Fill it once and never edit it afterwards.
+`05_governance/human_owner_notes/`, one file per finding. Its first line is
+`# Waiver: <finding ID> (guided)` or `(forced)`. Fill it once, commit it by name
+before the waiver round, and never edit it afterwards.
 
 ## Recording
 
 `pass` and `override` both refuse open P0-P2 findings. A waiver is therefore a
 human report with the verdict `override` that sets the finding to
-`waived_by_human`, and `ledger.py record` takes a report only while the slice is
-`reviewing`. After a needs-work review the slice is at `fix`, so the waiver takes
-one more round in which nothing changes:
+`waived_by_human`; `ledger.py waive` writes that report and records it. A report
+is taken only while the slice is `reviewing`, and after a needs-work review the
+slice is at `fix`. So the waiver takes one more round in which nothing changes:
 
 1. `python scripts/prompt.py <slice>`.
 2. `python scripts/ledger.py coded <slice> --notes <notes>`; the notes say that
    nothing changed and name the waiver file.
 3. `python scripts/verify.py <slice>`.
-4. `python scripts/prompt.py <slice> --review`.
-5. Write the report at the path that prompt names, in its contract: an empty
-   `## Findings` table; `## Finding updates` with one row per waived finding
-   (source report, its hash as the backlog prints it, finding ID,
-   `waived_by_human`, `-`); the closure decision; `Verdict: override - next:
-   Accept <slice>.` After the verdict line, a section `## Waiver` names the
-   waiver file, says `guided` or `forced`, who drafted the report and that the
-   owner decided.
-6. The owner runs `python scripts/ledger.py record <report> --by human`.
-7. `python scripts/ledger.py accept <slice>`, with `--commit` when authorized.
+4. The owner runs `python scripts/ledger.py waive <slice> --finding <ID>
+   --authority <waiver file> --objective <status> --by human`, adding `--force`
+   for a forced waiver. The status is `achieved`, `not_achieved` or
+   `indeterminate`. Several findings take `--finding` and `--authority` in
+   pairs; every open P0-P2 finding of the slice must be named.
+5. `python scripts/ledger.py accept <slice>`, with `--commit` when authorized.
 
-Three traps:
+The command refuses a P0, a finding that is not open, a waiver file whose first
+line does not name the finding and the kind, a living file, an automated seat
+and any actor but `human`. It writes `<slice>_r<round>_waiver.md` beside the
+slice's reviews: the update rows with source and hash, the verdict, the kind and
+the waiver files.
 
-- Make no commit between step 3 and step 6, a hand-back commit included. The
+The same report may be written by hand and recorded with `ledger.py record
+<report> --by human`. Then an older finding belongs in `## Finding updates`
+only, and the report says who drafted it.
+
+Two traps:
+
+- Make no commit between step 3 and step 4, a hand-back commit included. The
   receipt is tied to the commit it was made on.
-- An older finding is waived in `## Finding updates` only. Listed in
-  `## Findings` as well, the record is refused.
-- `--by human` records the owner as the actor. The owner runs the command, and
-  the report says who drafted it.
+- `--by human` records the owner as the actor: the owner runs the command.
 
 ## At the milestone review
 

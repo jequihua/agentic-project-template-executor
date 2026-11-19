@@ -554,6 +554,15 @@ def _parser():
     item.add_argument("report")
     item.add_argument("--milestone")
     item.add_argument("--by", choices=ACTORS, default="architect")
+    item = sub.add_parser("waive")
+    item.add_argument("slice")
+    item.add_argument("--finding", action="append", required=True)
+    item.add_argument("--authority", action="append", required=True)
+    item.add_argument(
+        "--objective", required=True, choices=("achieved", "not_achieved", "indeterminate")
+    )
+    item.add_argument("--by", required=True, choices=("human",))
+    item.add_argument("--force", action="store_true")
     item = sub.add_parser("accept")
     item.add_argument("slice")
     item.add_argument("--commit", action="store_true")
@@ -692,6 +701,77 @@ def _record(root, value, args, rm, events, state):
             f"notice: {sid} drifts: the last two reviews closed every earlier finding and "
             "opened only new ones. Stop and hand back; do not use the remaining rounds"
         )
+
+
+def _waive(root, args, rm, events, state):
+    """Write the owner's override report for a waiver round and record it."""
+    _need("FRUTLUPS_SEAT" not in os.environ, "an automated seat cannot waive")
+    _need(len(args.finding) == len(args.authority), "give one --authority per --finding")
+    sid = args.slice
+    current = state["slices"].get(sid)
+    _need(
+        bool(current) and current["step"] == "reviewing",
+        f"{sid} is not at reviewing; run the waiver round first (docs/waivers.md)",
+    )
+    pending = {item["id"]: (key, item) for key, item in
+               findings.open_in_scope(root, events, sid).items()}
+    kind = "forced" if args.force else "guided"
+    rows, files = [], []
+    for identity, value in zip(args.finding, args.authority):
+        _need(identity in pending, f"{identity} is not an open P0-P2 finding of {sid}")
+        (source, sha, _), item = pending.pop(identity)
+        _need(
+            item["severity"] != "P0",
+            f"{identity} is P0 and cannot be waived: fix it, or have a reviewer regrade it",
+        )
+        ref = _ref(root, value)
+        _write_once(ref["path"], rm)
+        title = (c.repo_path(root, ref["path"]).read_text(encoding="utf-8") + "\n").splitlines()[0]
+        _need(
+            identity in title and f"({kind})" in title,
+            f"{ref['path']} must begin `# Waiver: {identity} ({kind})`; "
+            "use --force only for a forced waiver (docs/waivers.md)",
+        )
+        rows.append(f"| {source} | {sha} | {identity} | waived_by_human | - |")
+        files.append(f"- {identity}: `{ref['path']}` (normalized evidence SHA-256 `{ref['sha']}`)")
+    _need(
+        not pending,
+        "these findings stay open: " + ", ".join(sorted(pending)) + "; waive each or fix them",
+    )
+    waived = ", ".join(args.finding)
+    text = "\n".join([
+        f"# Review: {sid} round {current['round']}",
+        "",
+        "## Findings",
+        "| id | severity | disposition | summary |",
+        "| --- | --- | --- | --- |",
+        "",
+        "## Finding updates",
+        "| source | sha | id | disposition | related |",
+        "| --- | --- | --- | --- | --- |",
+        *rows,
+        "",
+        "## Closure Decision",
+        f"Objective status: {args.objective}",
+        f"Objective evidence: The human owner waived {waived}; nothing changed in this "
+        "round and its receipt is the execution evidence.",
+        "",
+        "## Verdict",
+        f"Verdict: override - next: Accept {sid}.",
+        "",
+        "## Waiver",
+        f"Kind: {kind}",
+        *files,
+        "Written by `ledger.py waive`; decided and recorded by the human owner.",
+        "",
+    ])
+    rel = f"05_governance/reviews/{sid.split('-')[0].lower()}/{sid}_r{current['round']}_waiver.md"
+    path = c.repo_path(root, rel)
+    _need(not path.exists(), f"{rel} exists already")
+    c.artifact_text(path, text)
+    args.milestone = None
+    _record(root, rel, args, rm, events, state)
+    print(f"{sid} {kind} waiver of {waived}: {rel}")
 
 
 def _reach_notices(review):
@@ -920,6 +1000,8 @@ def _execute(args):
                 _coded(root, args, rm, events, state, ledger_path)
             elif args.command == "record":
                 _record(root, args.report, args, rm, events, state)
+            elif args.command == "waive":
+                _waive(root, args, rm, events, state)
             elif args.command == "accept":
                 current = state["slices"][args.slice]
                 if current["step"] != "accept_pending":

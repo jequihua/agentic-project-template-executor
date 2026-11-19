@@ -585,6 +585,121 @@ class AdmissionTests(unittest.TestCase):
         self.assertEqual(state["slices"]["M001-S01"]["step"], "fix")
         self.assertEqual(state["slices"]["M001-S01"]["round"], 4)
 
+    def waiver_round(self, rows, files):
+        """One needs-work review, committed waiver files, then a round with no change."""
+        prompt.coding(self.root, "M001-S01")
+        self.assertEqual(self.cli("coded", "M001-S01")[0], 0)
+        self.assertTrue(verify.run(self.root, "M001-S01", 10)[0]["ok"])
+        text = PASS_REPORT.replace(
+            "| --- | --- | --- | --- |", "| --- | --- | --- | --- |\n" + "\n".join(rows)
+        )
+        text = text.replace("achieved", "not_achieved").replace(
+            "Verdict: pass", "Verdict: needs_work"
+        )
+        (self.root / "05_governance/reviews/needs_work.md").write_text(text)
+        self.assertEqual(self.cli("record", "05_governance/reviews/needs_work.md")[0], 0)
+        for rel, title in files.items():
+            (self.root / rel).write_text(f"# Waiver: {title}\n\n- Owner's words: accepted.\n")
+            run_git(self.root, "add", "--", rel)
+        run_git(self.root, "commit", "-qm", "Waiver files", "--", *files)
+        return self.root / commit.LEDGER
+
+    def test_waive_writes_and_records_the_owner_override_for_a_waiver_round(self):
+        note = "05_governance/human_owner_notes/2026-01-15_F1.md"
+        waive = ("waive", "M001-S01", "--finding", "M001-S01-F1", "--objective", "achieved",
+                 "--by", "human")
+        path = self.waiver_round(
+            ["| M001-S01-F1 | P1 | open | A broken promise. Reach: constructed. |"],
+            {note: "M001-S01-F1 (guided)"},
+        )
+        code, out = self.cli(*waive, "--authority", note)
+        self.assertEqual(code, 2)
+        self.assertIn("not at reviewing", out)
+        prompt.coding(self.root, "M001-S01")
+        self.assertEqual(self.cli("coded", "M001-S01")[0], 0)
+        self.assertTrue(verify.run(self.root, "M001-S01", 10)[0]["ok"])
+        before = path.read_bytes()
+        tree = _workspace.snapshot(self.root)
+        for args, diagnostic in (
+            ((*waive[:3], "M001-S01-F9", *waive[4:], "--authority", note), "not an open"),
+            ((*waive, "--authority", note, "--force"), "must begin"),
+            ((*waive, "--authority", "00_brief/decisions.md"), "living file"),
+            ((*waive, "--authority", note, "--authority", note), "one --authority per"),
+        ):
+            with self.subTest(diagnostic=diagnostic):
+                code, out = self.cli(*args)
+                self.assertEqual(code, 2)
+                self.assertIn(diagnostic, out)
+                self.assertEqual(path.read_bytes(), before)
+                self.assertEqual(_workspace.snapshot(self.root), tree)
+        with mock.patch.dict("os.environ", FRUTLUPS_SEAT="reviewer"):
+            self.assertEqual(self.cli(*waive, "--authority", note)[0], 2)
+        with self.assertRaises(SystemExit), contextlib.redirect_stderr(io.StringIO()):
+            ledger.main(["--root", str(self.root), *waive[:-1], "architect", "--authority", note])
+        self.assertEqual(path.read_bytes(), before)
+        code, out = self.cli(*waive, "--authority", note)
+        self.assertEqual(code, 0, out)
+        report = self.root / "05_governance/reviews/m001/M001-S01_r2_waiver.md"
+        text = report.read_text(encoding="utf-8")
+        self.assertIn("| M001-S01-F1 | waived_by_human | - |", text)
+        self.assertIn("Kind: guided", text)
+        self.assertIn(note, text)
+        events = ledger.read(path)
+        self.assertEqual((events[-1]["ev"], events[-1]["by"], events[-1]["verdict"]),
+                         ("reviewed", "human", "override"))
+        state = ledger.fold(events, roadmap.load(self.root))
+        self.assertEqual(state["slices"]["M001-S01"]["step"], "accept_pending")
+        backlog = (self.root / "05_governance/backlog.md").read_text(encoding="utf-8")
+        self.assertIn("| M001-S01-F1 | P1 | waived_by_human |", backlog)
+        self.assertEqual(self.cli("accept", "M001-S01", "--commit")[0], 0)
+        self.assertEqual(self.cli("check")[0], 0)
+
+    def test_waive_marks_a_forced_waiver_and_needs_the_flag_for_it(self):
+        note = "05_governance/human_owner_notes/2026-01-15_F2.md"
+        self.waiver_round(
+            ["| M001-S01-F2 | P2 | open | A reachable defect. Reach: project. |"],
+            {note: "M001-S01-F2 (forced)"},
+        )
+        prompt.coding(self.root, "M001-S01")
+        self.assertEqual(self.cli("coded", "M001-S01")[0], 0)
+        self.assertTrue(verify.run(self.root, "M001-S01", 10)[0]["ok"])
+        waive = ("waive", "M001-S01", "--finding", "M001-S01-F2", "--authority", note,
+                 "--objective", "not_achieved", "--by", "human")
+        code, out = self.cli(*waive)
+        self.assertEqual(code, 2)
+        self.assertIn("use --force only for a forced waiver", out)
+        code, out = self.cli(*waive, "--force")
+        self.assertEqual(code, 0, out)
+        self.assertIn("forced waiver of M001-S01-F2", out)
+        report = self.root / "05_governance/reviews/m001/M001-S01_r2_waiver.md"
+        text = report.read_text(encoding="utf-8")
+        self.assertIn("Kind: forced", text)
+        self.assertIn("Objective status: not_achieved", text)
+
+    def test_waive_refuses_p0_and_findings_left_open(self):
+        notes = {f"05_governance/human_owner_notes/2026-01-15_F{n}.md": f"M001-S01-F{n} (forced)"
+                 for n in (0, 2)}
+        zero, two = notes
+        path = self.waiver_round(
+            ["| M001-S01-F0 | P0 | open | Data loss. Reach: project. |",
+             "| M001-S01-F2 | P2 | open | A bounded defect. Reach: project. |"],
+            notes,
+        )
+        prompt.coding(self.root, "M001-S01")
+        self.assertEqual(self.cli("coded", "M001-S01")[0], 0)
+        self.assertTrue(verify.run(self.root, "M001-S01", 10)[0]["ok"])
+        before = path.read_bytes()
+        base = ("waive", "M001-S01", "--objective", "not_achieved", "--by", "human", "--force")
+        code, out = self.cli(*base, "--finding", "M001-S01-F2", "--authority", two)
+        self.assertEqual(code, 2)
+        self.assertIn("stay open: M001-S01-F0", out)
+        code, out = self.cli(*base, "--finding", "M001-S01-F2", "--authority", two,
+                             "--finding", "M001-S01-F0", "--authority", zero)
+        self.assertEqual(code, 2)
+        self.assertIn("is P0 and cannot be waived", out)
+        self.assertEqual(path.read_bytes(), before)
+        self.assertFalse((self.root / "05_governance/reviews/m001/M001-S01_r2_waiver.md").exists())
+
     def test_attempt_input_read_is_bounded_before_json(self):
         path = self.root / "local_state/oversized.json"
         path.write_bytes(b" " * (protocol.EVENT_LIMIT + 1))

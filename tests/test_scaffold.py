@@ -307,9 +307,10 @@ class ScaffoldContractTests(unittest.TestCase):
 
     def test_distributable_size(self) -> None:
         # Q001-04: 24 KiB maintenance reserve for the evidenced optional run contract.
-        # This 416 KiB alarm is a ceiling, not a content target; retain per-file alarms.
-        # Raised from 384 KiB for the milestone executor mode (decision D002).
-        self.assertLess(sum((ROOT / rel).stat().st_size for rel in EXPECTED), 416 * 1024)
+        # This 432 KiB alarm is a ceiling, not a content target; retain per-file alarms.
+        # Raised from 384 KiB for the milestone executor mode (decision D002), then
+        # for waivers, reach and the `waive` command.
+        self.assertLess(sum((ROOT / rel).stat().st_size for rel in EXPECTED), 432 * 1024)
 
     def test_archive_excludes_template_tests(self) -> None:
         with tempfile.TemporaryDirectory() as td:
