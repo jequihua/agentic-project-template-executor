@@ -221,6 +221,21 @@ def project(root, events, extra=None):
     return projection.findings, projection.diagnostics
 
 
+def drift(root, events, sid):
+    """Count the slice's latest reviews in a row that closed all older findings and opened new."""
+    projection = Projection(root)
+    streak = 0
+    for ref, event in report_events(events):
+        mine = event["ev"] == "reviewed" and event.get("slice") == sid
+        before = bool(projection.open_by_scope.get(sid))
+        report = projection.add(ref, event)
+        if mine:
+            own = {(*ref, identity) for identity in report["open"]}
+            moved = before and own and projection.open_by_scope.get(sid, set()) == own
+            streak = streak + 1 if moved else 0
+    return streak
+
+
 def validate_record(root, events, path, sha, by, current=None):
     event = {"ev": "reviewed", "schema": protocol.SCHEMA, "by": by}
     projection = Projection(root)

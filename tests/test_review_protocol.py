@@ -547,6 +547,44 @@ class AdmissionTests(unittest.TestCase):
             code = ledger.main(["--root", str(self.root), *args])
         return code, out.getvalue()
 
+    def test_record_prints_reach_and_drift_notices_without_refusing(self):
+        folder = self.root / "05_governance/reviews"
+        previous = None
+        outputs = []
+        for round_no in (1, 2, 3):
+            prompt.coding(self.root, "M001-S01")
+            self.assertEqual(self.cli("coded", "M001-S01")[0], 0)
+            self.assertTrue(verify.run(self.root, "M001-S01", 10)[0]["ok"])
+            reach = "" if round_no == 1 else " Reach: constructed."
+            text = PASS_REPORT.replace("round 1", f"round {round_no}").replace(
+                "| --- | --- | --- | --- |",
+                "| --- | --- | --- | --- |\n"
+                f"| M001-S01-F{round_no} | P2 | open | A bounded defect.{reach} |",
+            )
+            text = text.replace("achieved", "not_achieved").replace(
+                "Verdict: pass", "Verdict: needs_work"
+            )
+            if previous:
+                update = (
+                    "## Finding updates\n| source | sha | id | disposition | related |\n"
+                    "| --- | --- | --- | --- | --- |\n"
+                    f"| {previous} | {c.sha(self.root / previous)} | "
+                    f"M001-S01-F{round_no - 1} | closed_by_review | - |\n"
+                )
+                text = text.replace("## Closure Decision", update + "\n## Closure Decision")
+            previous = f"05_governance/reviews/drift{round_no}.md"
+            (folder / f"drift{round_no}.md").write_text(text)
+            code, out = self.cli("record", previous)
+            self.assertEqual(code, 0, out)
+            outputs.append(out)
+        self.assertIn("notice: M001-S01-F1 states no reach", outputs[0])
+        self.assertNotIn("states no reach", outputs[1] + outputs[2])
+        self.assertNotIn("drifts", outputs[0] + outputs[1])
+        self.assertIn("notice: M001-S01 drifts", outputs[2])
+        state = ledger.fold(ledger.read(self.root / commit.LEDGER), roadmap.load(self.root))
+        self.assertEqual(state["slices"]["M001-S01"]["step"], "fix")
+        self.assertEqual(state["slices"]["M001-S01"]["round"], 4)
+
     def test_attempt_input_read_is_bounded_before_json(self):
         path = self.root / "local_state/oversized.json"
         path.write_bytes(b" " * (protocol.EVENT_LIMIT + 1))

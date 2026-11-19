@@ -99,6 +99,8 @@ path. Holistic ranges use the first accepted receipt's immutable `base_commit`.
 A report has a findings table (`id,severity,disposition,summary`), one closure
 decision and exactly one `Verdict: pass|needs_work|blocked|override - next: ...`.
 Pass/override refuse open P0-P2. Only human may record an override or waiver.
+`record` prints a notice, never a refusal, for an open P0-P2 finding whose summary
+states no reach, and for a slice whose last two reviews drift ([method](method.md)).
 Rows split on unescaped pipes; `\|` means a literal pipe in the summary.
 Holistic P0-P2 IDs begin with the affected slice ID.
 

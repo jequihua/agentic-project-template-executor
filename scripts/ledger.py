@@ -663,6 +663,7 @@ def _record(root, value, args, rm, events, state):
         )
         findings.reconcile(root, read(ledger_path))
         print(f"{args.milestone} holistic {review['verdict']}")
+        _reach_notices(review)
         return
     sid = review["identity"]
     round_no = review["round"]
@@ -685,6 +686,23 @@ def _record(root, value, args, rm, events, state):
     append(ledger_path, event, rm)
     findings.reconcile(root, read(ledger_path))
     print(f"{sid} r{round_no} review {review['verdict']} open={len(review['open'])}")
+    _reach_notices(review)
+    if review["verdict"] == "needs_work" and findings.drift(root, read(ledger_path), sid) >= 2:
+        print(
+            f"notice: {sid} drifts: the last two reviews closed every earlier finding and "
+            "opened only new ones. Stop and hand back; do not use the remaining rounds"
+        )
+
+
+def _reach_notices(review):
+    # Reminders, never refusals: a report without the word stays valid.
+    for item in review["findings"]:
+        stated = re.search(r"Reach: (project|constructed|unknown)\.", item["summary"])
+        if item["severity"] != "P3" and item["disposition"] == "open" and not stated:
+            print(
+                f"notice: {item['id']} states no reach; end its summary with "
+                "`Reach: project.`, `Reach: constructed.` or `Reach: unknown.`"
+            )
 
 
 def _git_identity(root):

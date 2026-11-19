@@ -95,6 +95,36 @@ class FindingCompatibilityTests(unittest.TestCase):
                     findings.project(root, [{**waived, "by": actor}])
             findings.project(root, [{**waived, "by": "human"}])
 
+    def test_drift_counts_reviews_that_close_all_older_findings_and_open_only_new(self):
+        with tempfile.TemporaryDirectory() as name:
+            root = Path(name)
+
+            def review(label, new, round_no, closes=()):
+                text = report_row(new, round_no=round_no) if new else PASS_REPORT
+                rows = "".join(
+                    f"| {old['report']} | {old['sha']} | {identity} | closed_by_review | - |\n"
+                    for old, identity in closes
+                )
+                if rows:
+                    table = ("## Finding updates\n| source | sha | id | disposition | related |\n"
+                             "| --- | --- | --- | --- | --- |\n" + rows)
+                    text = text.replace("## Closure Decision", table + "\n## Closure Decision")
+                return save_report(root, label, text)
+
+            first = review("r1", "F1", 1)
+            second = review("r2", "F2", 2, [(first, "F1")])
+            third = review("r3", "F3", 3, [(second, "F2")])
+            self.assertEqual(findings.drift(root, [first], "M001-S01"), 0)
+            self.assertEqual(findings.drift(root, [first, second], "M001-S01"), 1)
+            self.assertEqual(findings.drift(root, [first, second, third], "M001-S01"), 2)
+            self.assertEqual(findings.drift(root, [first, second, third], "M001-S02"), 0)
+            # A review that leaves an older finding open is failing, not drifting.
+            stuck = review("r3-stuck", "F4", 3)
+            self.assertEqual(findings.drift(root, [first, second, stuck], "M001-S01"), 0)
+            # A pass ends the streak.
+            passed = review("r4", None, 4, [(third, "F3")])
+            self.assertEqual(findings.drift(root, [first, second, third, passed], "M001-S01"), 0)
+
     def test_checkpoint_does_not_suppress_later_decision_same_report(self):
         with tempfile.TemporaryDirectory() as name:
             root = Path(name)

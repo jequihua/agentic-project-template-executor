@@ -102,7 +102,9 @@ review each use a round. At the limit, stop.
 
 Stop earlier on drift: when a review closes every earlier finding of the slice
 and opens only new ones, for the second time in a row, record it and stop. The
-slice is not failing; more rounds would find more of the same.
+slice is not failing; more rounds would find more of the same. `ledger.py record`
+prints `notice: <slice> drifts` when it sees this; a notice about a missing
+reach word goes into the run report.
 
 ### Blockers and refusals
 
