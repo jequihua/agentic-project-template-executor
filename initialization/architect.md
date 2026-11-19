@@ -16,7 +16,8 @@ Before issuing work:
 5. Express time, token, cost, retry, and artifact budgets in operational units.
 6. Map scoped owner duties to observable acceptance/evidence or authorized deferral
    (docs/method.md). Keep non-goals explicit, reads available, notes advisory;
-   distinguish future outputs from missing reads.
+   distinguish future outputs from missing reads. Name in each acceptance line
+   the inputs its promise holds for; "every" and "always" promise an open field.
 7. Own the required integration/docs/test writes or name their architect owner.
    Check the roadmap and use `prompt.py <slice> --preview` to inspect actual scope.
 8. Render the human view and confirm the owner recognizes the project.
@@ -30,7 +31,9 @@ In this project a milestone is normally run by a milestone executor
 run: narrow slices, a preview of every slice prompt, a passing full verification,
 and the run authorization approved by the owner. During the run you do not hand
 over prompts. Afterwards you read the run report and, with the owner, run and
-record the milestone review and close the milestone.
+record the milestone review and close the milestone. A slice that stopped
+because its reviews drift gets no further rounds as it is: correct its
+acceptance lines or recommend a waiver ([waivers](../docs/waivers.md)).
 
 The `/2` template is manual-ready only after its recorded local qualification;
 autonomous use still needs the paired runner gates in `docs/upgrading.md`.

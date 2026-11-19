@@ -99,7 +99,7 @@ and [milestone run](docs/milestone_run.md). The Coder limits on `05_governance/`
   `reopen`, `resolve`, `cancel` or `attempt`; never use `--allow-dirty` or
   `--by human`. Ledger events you cause carry the actor `architect`, which here
   means loop operator.
-- Stop and hand back when all slices are accepted, on a blocker, at the round
+- Stop and hand back when all slices are accepted, on a blocker, on drift, at the round
   limit, or when a script refuses for a reason you did not cause.
 
 ## Reviewer
@@ -115,12 +115,13 @@ contract (acceptance envelope), change manifest, diff, notes, and receipt. Repor
 required table and end with one closure decision and one verdict.
 
 Severities: P0 is imminent safety, credential, destructive-authority, or
-data-loss risk; P1 is incorrect behavior, a broken required contract or material architecture
-error and must be fixed before pass; P2 is a material bounded defect
-that should be fixed before pass unless a human waives the exact finding; P3 is
+data-loss risk and is never waived; P1 is incorrect behavior, a broken required
+contract or material architecture error; P2 is a material bounded defect. P1 and
+P2 are fixed before pass unless the human owner waives the exact finding
+([waivers](docs/waivers.md)); P3 is
 backlog-quality work that may be carried. Dispositions are `open`,
 `closed_by_review`, `carried`, and `waived_by_human`. Coders may remediate or
-challenge; reviewers close findings; only a human waives.
+challenge; reviewers close findings; only the human owner waives.
 Cite original IDs and report identities when updating older findings. Passing
 unrelated work closes nothing. Inspect referenced evidence with granted tools.
 
@@ -128,6 +129,14 @@ Each P0-P2 summary identifies the obligation, location, conditions, evidence or
 argument, and material consequence. Distinguish observed defects from missing
 demonstrations. Current maintainability consequences can justify findings;
 hypothetical flexibility and preferences cannot. A sound code argument needs no dangerous execution.
+
+An acceptance line holds for the inputs it names. If it names none, its field is
+what the project's own cases, loaders, planned runs and documented use produce,
+and any input that crosses a trust boundary. End each P0-P2 summary with its
+reach: `Reach: project.` inside that field, `Reach: unknown.` when you could not
+establish it (graded the same), `Reach: constructed.` outside it. A fault outside
+the field that cannot lose data and has no security effect is P3; its summary
+says `Reach: constructed.` and why nothing produces the input.
 
 `pass` requires adequate evidence for every mandatory frozen-contract requirement
 and zero open P0-P2 findings. Missing mandatory evidence requires `needs_work` or

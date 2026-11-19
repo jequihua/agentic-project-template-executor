@@ -100,6 +100,10 @@ At most two corrective rounds per slice (three rounds in all), unless the
 authorization states another number. A failed verification and a `needs_work`
 review each use a round. At the limit, stop.
 
+Stop earlier on drift: when a review closes every earlier finding of the slice
+and opens only new ones, for the second time in a row, record it and stop. The
+slice is not failing; more rounds would find more of the same.
+
 ### Blockers and refusals
 
 - Missing authority or evidence while coding: first `python scripts/ledger.py
@@ -119,11 +123,13 @@ review each use a round. At the limit, stop.
 
 ## Hand-back (executor)
 
-Stop when all slices are accepted, on a blocker, at the round limit, when a budget
-of the authorization is used up, or on a refusal you did not cause. Then write
-`05_governance/reviews/<mid>/<MID>_run_report.md`:
+Stop when all slices are accepted, on a blocker, at the round limit, on drift,
+when a budget of the authorization is used up, or on a refusal you did not cause.
+Then write `05_governance/reviews/<mid>/<MID>_run_report.md`:
 
 - per slice: rounds, verdicts, the acceptance commit;
+- for a slice that is not accepted: per round, the findings opened and closed
+  with their reach, and whether the stop is drift;
 - what was delegated to subagents;
 - every page read outside the project, per slice and role: address, version
   documented, reason;
@@ -204,7 +210,12 @@ refused until every slice is accepted.
    with `python scripts/ledger.py resolve <slice> --reason ... --authority <file>`,
    naming a file written once, such as the owner's dated note: it is hashed whole
    and can never change again.
-4. Write the continuation authorization, `05_governance/human_owner_notes/
+4. A slice that stopped on drift gets no further rounds as it is. With the
+   owner, either correct its acceptance lines or non-goals in `roadmap.yaml` so
+   that they name the field of inputs (the next prompt freezes the corrected
+   task; [method](method.md#rounds-and-reopening)), or recommend a waiver
+   ([waivers](waivers.md)). You write the waiver file; the executor does not.
+5. Write the continuation authorization, `05_governance/human_owner_notes/
    <MID>_run_2.md` (then `_3`, and so on), in the layout of the first, adding: the
    state of each unfinished slice as `ledger.py status` prints it; the uncommitted
    paths that belong to it, from `git status --short`; the corrective rounds and

@@ -93,6 +93,7 @@ prompts or reports, so issuing another prompt cannot reuse an earlier report.
 Slice and holistic recording project explicit finding dispositions into the marked
 region of `05_governance/backlog.md`. `ledger.py reconcile` rebuilds it after an
 interruption. Passing another review never implicitly closes an older finding.
+Only the owner waives one: [waivers](waivers.md).
 
 Owner reopening uses
 `python scripts/ledger.py reopen M001-S01 --reason "<reason>" --by human`.

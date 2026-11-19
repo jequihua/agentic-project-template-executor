@@ -27,8 +27,10 @@ coding to subagents when it helps; have every slice reviewed by a fresh read-onl
 subagent; accept only a recorded pass, with a commit.
 
 Stop and hand back when all slices are accepted, on a blocker, at the round
-limit, when a budget of the authorization is used up, or when a script refuses for
-a reason you did not cause. Write the run report. Make the hand-back commit only
+limit, on drift (a review closes every earlier finding and opens only new ones,
+for the second time in a row), when a budget of the authorization is used up, or
+when a script refuses for a reason you did not cause. You never waive a finding
+and never write a waiver file; your evidence goes into the run report. Write the run report. Make the hand-back commit only
 when no commit is pending and nothing is staged, as the milestone run document
 describes; otherwise leave the report uncommitted and say so.
 

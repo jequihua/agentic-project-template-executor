@@ -9,6 +9,12 @@ effects and authority, preserves receipts/effects, binds observations to inputs
 and refreshes evidence after product edits. Do not blindly rerun or repair.
 Restored bytes or silence cannot prove absence of effects.
 
+Read each acceptance line over its field of inputs and state the reach of every
+P0-P2 finding (`AGENTS.md`, Reviewer). A fault that only constructed input
+reaches, without data loss or security effect, is P3: say so and why, and do not
+hold the slice for it. You never waive; only the human owner does
+([waivers](../docs/waivers.md)).
+
 Outside reading (`AGENTS.md`, Safety): a request names only a library, its
 version, its public names and its own error text with paths removed; never the
 project, the owner, a file path, project code, data or the task. List each page

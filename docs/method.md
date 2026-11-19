@@ -61,6 +61,12 @@ Before issuance, the architect compares scoped owner sources/accepted decisions
 with acceptance and verification: each duty needs an acceptance home and evidence
 route or an authorized deferral, citing source locations; no new report schema.
 
+Every promise in an acceptance line names the inputs it holds for; inputs left
+out on purpose are non-goals. A line that names none holds for its default field:
+what the project's own cases, loaders, planned runs and documented use produce,
+and any input that crosses a trust boundary. State a tolerance on measured
+quantities, no tighter than the components promise each other.
+
 Review the objective, acceptance, non-goals, read/write and verification boundaries,
 safety rules and source/contract comparison. Route omitted owner duties to the
 architect for authority correction; reviewers do not enlarge the envelope. Block
@@ -70,20 +76,34 @@ not inherently P2: require evidence of retained mandatory behavioral coverage.
 
 Findings have stable ids, severity, disposition, and summary:
 
-- P0: imminent safety, credential, destructive-authority, or data-loss risk.
+- P0: imminent safety, credential, destructive-authority, or data-loss risk;
+  never waived.
 - P1: incorrect behavior, broken required contract, or material architecture
-  error; must be fixed before pass.
-- P2: material bounded defect in evidence, compatibility, or maintainability;
-  must be fixed before pass unless a human waives the exact finding.
+  error.
+- P2: material bounded defect in evidence, compatibility, or maintainability.
 - P3: clarity or deferred hardening that cannot falsely authorize acceptance;
   it may be carried to `backlog.md` with a pass.
 
+P1 and P2 are fixed before pass unless the human owner waives the exact finding
+([waivers](waivers.md): the conditions, the forced kind, the commands).
 Reviewers open/close findings; coders remediate/challenge, never self-close.
 Only the human owner records `waived_by_human`; open P0-P2 preclude pass.
 Each P0-P2 summary names obligation, location, conditions, evidence/argument and
 material consequence. Distinguish observed defects from missing demonstrations.
 Present maintainability costs can be material; speculative flexibility and
 personal preference are nonblocking.
+
+Grades follow reach. Each P0-P2 summary ends with `Reach: project.` (inside the
+acceptance line's field of inputs), `Reach: unknown.` (not established; graded as
+project) or `Reach: constructed.` (outside the field). A fault outside the field
+that cannot lose data and has no security effect is deferred hardening: P3, with
+`Reach: constructed.` and the reason nothing produces the input in its summary.
+A fault inside the field keeps its grade however rare the input.
+
+When a review closes every earlier finding of a slice and opens only new ones
+for the second time in a row, the slice is drifting, not failing. Stop: more
+rounds find more of the same. The architect corrects the acceptance lines to
+their real field ([rounds](#rounds-and-reopening)) or recommends a waiver.
 
 ## Objective and verdict
 
@@ -104,6 +124,8 @@ Verdict: pass|needs_work|blocked - next: <one move>
 ```
 
 Human records may additionally use `override`; autonomous reviewers may not.
+It leads to acceptance like a pass and is how a waiver is recorded
+([waivers](waivers.md#recording)).
 
 ## Rounds and reopening
 

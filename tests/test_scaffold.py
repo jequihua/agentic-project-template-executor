@@ -77,6 +77,7 @@ EXPECTED = {
     "questions/answered/README.md",
     "questions/open/README.md",
     "questions/template_question.md",
+    "questions/template_waiver.md",
     "scripts/_common.py",
     "scripts/_evidence.py",
     "scripts/front_repo.py",
@@ -97,12 +98,14 @@ EXPECTED = {
     "docs/autonomy.md",
     "docs/project_checks.md",
     "docs/upgrading.md",
+    "docs/waivers.md",
     "docs/walkthrough.md",
 }
 LIMITS = {
     "docs/walkthrough.md": 12_800,
-    "AGENTS.md": 10_240,  # Milestone executor role (decision D002) added about 2 KiB.
-    "docs/milestone_run.md": 12_288,
+    "AGENTS.md": 11_264,  # Executor role (D002), then reach and the field of inputs.
+    "docs/milestone_run.md": 13_312,
+    "docs/waivers.md": 5_120,
     "README.md": 4 * 1024,
     "ENVIRONMENT.md": 3_072,
     "docs/method.md": 15_360,
