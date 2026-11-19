@@ -437,7 +437,9 @@ class WalkthroughTests(unittest.TestCase):
                 members = {n: exported.read(n) for n in exported.namelist() if not n.endswith("/")}
                 self.assertIn("docs/walkthrough.md", members)
                 self.assertFalse(any(n.startswith("tests/") for n in members))
-                self.assertEqual(set(members), {n for n in inventory if not n.startswith("tests/")})
+                # Tests and the repository licence are not part of a project archive.
+                kept = {n for n in inventory if not n.startswith("tests/") and n != "LICENSE"}
+                self.assertEqual(set(members), kept)
                 for rel, raw in members.items():
                     self.assertEqual(raw, (ROOT / rel).read_bytes(), rel)
                 exported.extractall(project)
